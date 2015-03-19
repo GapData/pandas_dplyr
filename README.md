@@ -9,35 +9,39 @@ In October 2012 I wrote a document to help translate between R and python pandas
 I make no claims of completeness, but hope that readers will find this useful to go back and forth between the languages.
 
 ## Preliminaries 
+###### Python
 ```python
 # python preliminaries
 import numpy as np
 randn = np.random.randn
 from pandas import *
 ```
+###### R
 ```R
 # R preliminaries
 library(dplyr)
 library(tidyr)
 library(data.table) # used only for fread()
 ```
-
 ## Reading a dataFrame from file or URL
-
 The functions `read_csv` and  `fread` have similar performance. They attempt to infer from data field separator and field type. 
+###### Python
 ```python
 DF = read_csv(filepath)
 ```
+###### R
 ```R
 DF <- fread(filepath)
 ```
 Both pandas and R offer functions to access DMBS (though SQLAlchemy for Pandas, specific packages for R) and a variety of formats (e.g., Json).
 
 ##Generating a dataframe from existing data
+###### Python
 ```python
 # From dictionary
-x = {'city': ['Rome', 'New York', 'Moscow'], 'continent': [
-'Europe', 'America', 'Europe'], 'inhabitants': [8.4e6, 2.8e6, 11.5e6]}
+x = {'city': ['Rome', 'New York', 'Moscow'], 
+     'continent': ['Europe', 'America', 'Europe'], 
+     'inhabitants': [8.4e6, 2.8e6, 11.5e6]}
 DF = DataFrame(x)
 
 # from recarray
@@ -49,9 +53,12 @@ DataFrame(m)
 m = np.arange(12.).reshape((3, 4))        
 DataFrame(m, columns=['a', 'b', 'c', 'd'])
 ```
+###### R
 ```R
 # native
-DF <- data.frame(city=c('New York', 'Rome', 'Moscow'), continent = c('Europe', 'America', 'Europe'), inhabitants=c(8.4e6, 2.8e6, 11.5e6))
+DF <- data.frame(city=c('New York', 'Rome', 'Moscow'), 
+                 continent = c('Europe', 'America', 'Europe'), 
+                 inhabitants=c(8.4e6, 2.8e6, 11.5e6))
 # From list
 x <- list(city=c('New York', 'Rome', 'Moscow'), continent = c('Europe', 'America', 'Europe'), inhabitants=c(8.4e6, 2.8e6, 11.5e6))
 DF <- as.data.frame(x)
@@ -61,67 +68,83 @@ m <- matrix(1:12, ncol=2)
 colnames(m) <- letters[1:3]
 as.data.frame(m)
 ```
-## Filtering rows 
+## Filtering rows
+###### Python
 ```python
 DF.ix[DF.inhabitants > 5e6] 
 DF.ix[[x in ['Europe', 'Asia'] for x in DF.continent]]
 ```
+###### R
 ```R
 filter(DF, inhabitants > 5e6)
 filter(DF, continent %in% c('Europe', 'Asia'))
 ```
 ## Filtering columns 
+###### Python
 ```python
 DF[['city','continent']]
 ```
+###### R
 ```R
 select(DF, city, continent)
 ```
 ## Deleting columns
+###### Python
 ```python
 del DF['city']
 ```
+###### R
 ```R
 DF[, 'city'] <- NULL
 select(DF, -city)
 ```
 ## Jointly filtering rows and columns 
+###### Python
 ```python
 DF.ix[[True, False, True], ['city', 'continent']]
 ```
+###### R
 ```R
 # base R; dplyr combines filter and select
 DF[c(TRUE, FALSE, TRUE), c('city', 'continent')] 
 ```
 ## Setting Fields to to NA
+###### Python
 ```python
 DF.ix[[True, False, True], ['city', 'continent']] = np.nan
 ```
+###### R
 ```R
 DF[c(TRUE, FALSE, TRUE), c('city', 'continent')] = NA
 ```
 ## Checking for (non)missing values 
+###### Python
 ```python
 DF.isnull()      # missing
 isnull(DF)       # alternative
 DF.notnull()     # non missing
 notnull(DF)      # alternative
 ```
+###### R
 ```R
 is.na(DF)        # missing
 !is.na(DF)       # non missing
 ```
 ## dropping missing values
+###### Python
 ```python
 DF.dropna()
 ```
+###### R
 ```R
 na.omit(s)   
 ```
 ## Replacing missing values
+###### Python
 ```python
 DF.fillna(-1)
 ```
+###### R
 ```R
 DF[is.na(DF)] <- -1
 ```
@@ -130,6 +153,7 @@ DF[is.na(DF)] <- -1
 DF.head(2)  # default is 5 rows
 DF.tail(2)
 ```
+###### R
 ```R
 head(DF, 2)  # default is 6 rows
 tail(DF, 2)
@@ -138,6 +162,7 @@ tail(DF, 2)
 ```python
 DF['birthdate'] = [-621, 1625, 1147]
 ```
+###### R
 ```R
 DF[,'birthdate'] <- c(-621, 1625, 1147)
 DF %<>% mutate(birthdate = c(-621, 1625, 1147))
@@ -146,6 +171,7 @@ DF %<>% mutate(birthdate = c(-621, 1625, 1147))
 ```python
 DF.columns =[x.upper() for x in list(DF.columns)]
 ```
+###### R
 ```R
 names(DF) <- toupper(names(DF))       # base R
 DF %<>% set_names(toupper(names(.)) 
@@ -154,7 +180,8 @@ DF %<>% set_names(toupper(names(.))
 ```python
 DF_list = [DF, DF]
 concat(DF_list)
- ```
+```
+###### R
 ```R
 rbind_all(DF, DF)
 rbind_list(list(DF, DF))
@@ -166,6 +193,7 @@ s = DataFrame({'a' : [0., .0, 1., 2.]}
 s.duplicated()
 s.drop_duplicates()
 ```
+###### R
 ```R
 s = data.frame(a = c(0., .0, 1., 2.))
 distinct(s)   # in base R, unique(s)
@@ -177,6 +205,7 @@ merge(DF1, DF2, how='right', on=['colname1', 'colname2'])
 merge(DF1, DF2, how='inner', on=['colname1', 'colname2'])
 merge(DF1, DF2, how='outer', on=['colname1', 'colname2'])
 ```
+###### R
 ```R
 inner_join(DF1, DF2, by = c('colname1', 'colname2')) 
 left_join (DF1, DF2, by = c('colname1', 'colname2'))
@@ -190,6 +219,7 @@ DF.sort('city', ascending=False)
 DF.sort('city', ascending=True)
 DF.sort(['city', 'continent'], ascending=True)
 ```
+###### R
 ```R
 DF %>% arrange(desc(city))
 DF %>% arrange(city)
@@ -199,6 +229,7 @@ DF %>% arrange(city, continent)
 ```python
 DF.describe()
 ```
+###### R
 ```R
 summary(DF)
 ```
@@ -225,15 +256,29 @@ DF_grouped['C'].agg(np.sum)
 grouped['C'].agg({'result1' : np.sum, 'result2' : np.mean})
 # sugared expression
 DF_grouped.std()
-Converting a dataframe from wide to long format
-cheese = DataFrame({'first' : ['John', 'Mary'], 'last' : ['Doe', 'Bo'], 'height' : [5.5, 6.0], 'weight' : [130, 150]})
+```
+## Converting a dataframe from wide to long format
+cheese = DataFrame({'first' : ['John', 'Mary'], 
+                    'last' : ['Doe', 'Bo'], 
+                    'height' : [5.5, 6.0], 
+                    'weight' : [130, 150]})
 pd.melt(cheese, id_vars=['first', 'last'])
-cheese <- data.frame(first = c('John', 'Mary'), last = c('Doe', 'Bo'), height = c(5.5, 6.0), weight = c(130, 150))
+```
+###### R
+```R
+cheese <- data.frame(first = c('John', 'Mary'), 
+                     last = c('Doe', 'Bo'), 
+                     height = c(5.5, 6.0), 
+                     weight = c(130, 150))
 cheese %>% gather(feature, value,-first,-last)
-Converting a dataframe from long to wide format
+```
+## Converting a dataframe from long to wide format
+###### Python
+```python
 df = DataFrame({'Animal': ['Animal1', 'Animal2', 'Animal3', 'Animal2', 'Animal1', 'Animal2', 'Animal3'], 'FeedType': ['A', 'B', 'A', 'A', 'B', 'B', 'A'], 'Amount': [10, 7, 4, 2, 5, 6, 2], })
 df.pivot_table(values='Amount', index='Animal', columns='FeedType', aggfunc='sum')
 ```
+###### R
 ```R
 df <- data.frame(
   Animal = c('Animal1', 'Animal2', 'Animal3', 'Animal2', 'Animal1',
@@ -266,9 +311,11 @@ mdf <- melt(df, id=c("month", "week"))
 acast(mdf, week ~ month ~ variable, mean)
 ```
 ## Applying functions to an entire data frame or column 
+###### Python
 ```python
 np.exp(df[['x']])  
 ```
+###### R
 ```R
 exp(df$x)  
 ```
