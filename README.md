@@ -356,3 +356,214 @@ Notice the difference: pandas aligns by name, taking the union of indices. Base 
 
 I close with a concrete example: the "baby names" data set made famous by Martin Wattenberg and Fernanda Viégas. The python code below is taken verbatim from Wes McKinney's book "Pandas for Data Analysis". The R code is a translation of the same analysis in R. A few distinguishing features stand out. First, python used method extensively whereas R uses functions. It is possible to chain methods but readability is not greatly enhanced. In R, all the operations can be performed by a single chain. Second, R delegates all the plotting functions to ggplot2, which uses a syntax similar to dplyr (but with a "+"; ggvis, the successor to ggplot, uses the familiar %>%"). Third, all R analysis uses "long data frame". This is an instance of "tidy data". Python uses wide format data frames for plotting (not unlike R's the ones matplot() would require. Lastly, the same few functions show up in R over and over: `group_by()`, `summarize()`, `is`, `reindex`, `arrange()`, `mutate()`, `filter()`. Pandas has a larger vocabulary, with `groupby`, `apply`, `sortindex`, `searchsorted`, `unstack`, `map`, `pivot_table` methods; many of which take further arguments; but it is at the same time slightly less verbose.
 ### Read Files
+###### Python
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+
+years = range(1880, 2011)
+pieces = []
+columns = ['name', 'sex', 'births']
+for year in years:
+    path = 'names/yob%d.txt' % year
+    #print(path)
+    frame = pd.read_csv(path, names=columns)
+    frame['year'] = year
+    pieces.append(frame)
+names = pd.concat(pieces, ignore_index=True)
+```
+###### R
+```R
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(stringr)
+library(magrittr) 
+
+years <- 1880:2011
+path <- sprintf('names/yob%d.txt', years)
+columns <- c('name', 'sex', 'births')
+
+reader <- function(yr){
+  x<- fread(sprintf('names/yob%d.txt', yr), data.table=FALSE) %>%     
+            set_names(columns)
+  x$year <- yr
+  x
+}
+babynames <- lapply(years, reader) %>%  bind_rows 
+```
+### Plots births by sex and year
+###### Python
+```python
+total_births = names.pivot_table('births', rows='year', cols='sex', aggfunc=sum)
+total_births.plot(title='Total births by sex and year')
+```
+###### R
+```R
+babynames %>%
+  group_by(year, sex) %>% 
+  summarize(births=sum(births)) %>%
+  ggplot(aes(x=year, y=births, color=sex)) + geom_line()
+```
+### Fraction of total names, within sex and year
+###### Python
+```python
+def add_prop(group):
+    # Integer division floors
+    births = group.births.astype(float) 
+    group['prop'] = births / births.sum()
+    return group
+
+names = names.groupby(['year', 'sex']).apply(add_prop)
+names.head()
+```
+###### R
+```R
+babynames %<>% 
+  group_by(year, sex) %>% 
+  mutate(prop=births/sum(births)) 
+```
+### Top 1000 names by year, sex
+###### Python
+def get_top1000(group):
+    return group.sort_index(by='births', ascending=False)[:1000]
+grouped = names.groupby(['year', 'sex'])
+top1000 = grouped.apply(get_top1000)
+top1000.index = np.arange(len(top1000))
+top1000.head()
+```
+###### R
+```R
+top1000 <- babynames %>% 
+  group_by(year, sex) %>% 
+  arrange(desc(births)) %>%
+  filter(min_rank(desc(births)) <= 1000) 
+top1000
+```
+### Plots the number of babies named John, Harry, Mary, Marilyn over time
+###### Python
+```python
+total_births = top1000.pivot_table('births', rows='year', 
+                                   cols='name', aggfunc=sum)
+subset = total_births[['John', 'Harry', 'Mary', 'Marilyn']]
+subset.plot(subplots=True, figsize=(12, 10), 
+            grid=False, title="Number of births per year")
+```
+###### R
+```R
+babynames %>% 
+  filter(name %in% c('John', 'Harry', 'Mary', 'Marilyn')) %>%
+  group_by(year, name) %>%
+  summarize(births=sum(births)) %>%
+  ggplot(aes(x=year, y=births)) + geom_line() + facet_grid(name ~ .)
+```
+### Plots the proportion of the top 1000 names as a percentage of total
+###### Python
+```python
+table = top1000.pivot_table('prop', rows='year', cols='sex', aggfunc=sum)
+
+table.plot(title='Sum of table1000.prop by year and sex', 
+           yticks=np.linspace(0, 1.2, 13), 
+           xticks=range(1880, 2020, 10))
+```
+###### R
+```R
+top1000 %>% 
+  group_by(year, sex) %>% 
+  summarize(prop=sum(prop)) %>%
+  ggplot(aes(x=year, y=prop, color=sex)) + 
+    geom_line() + 
+    ggtitle('Sum of table1000.prop by year and sex') + 
+    scale_y_continuous(limits=c(0, 1))
+```
+### How many boy names comprise 50% of the total in 2010?
+###### Python
+```python
+boys = top1000[top1000.sex == 'M']
+df = boys[boys.year == 2010]
+prop_cumsum = df.sort_index(by='prop', ascending=False).prop.cumsum()
+prop_cumsum.values.searchsorted(0.5)
+```
+###### R
+```R
+top1000 %>% 
+  filter(year == 2010, sex =='M') %>% 
+  arrange(desc(births)) %>%
+  mutate(totprop = cumsum(prop)) %>%
+  filter(totprop <= .50) %>%
+  nrow
+```
+### Plots number of most popular names used by 50% of boys and girls over time
+###### Python
+```python
+def get_quantile_count(group, q=0.5):
+  group = group.sort_index(by='prop', ascending=False)
+  return group.prop.cumsum().values.searchsorted(q) + 1
+diversity = top1000.groupby(['year', 'sex']).apply(get_quantile_count)
+diversity = diversity.unstack('sex')
+diversity.plot(title="Number of popular names in top 50%")
+```
+###### R
+```R
+get_quantile_count <- function(x, qtle=0.5) 
+  x %>% sort(decreasing=TRUE) %>% cumsum %>% {.<= qtle} %>% sum
+
+top1000 %>%
+  group_by(year, sex) %>%
+  summarize(No.names = get_quantile_count(prop)) %>%
+  ggplot(aes(x=year, y=No.names, color=sex)) + 
+    geom_line() + 
+    ggtitle('Number of popular names in top 50%')
+```
+### Plot the distribution of names by last letter for three time snapshots
+###### Python
+```python
+get_last_letter = lambda x: x[-1]
+last_letters = names.name.map(get_last_letter)
+last_letters.name = 'last_letter'
+table = names.pivot_table('births', rows=last_letters, cols=['sex', 'year'], aggfunc=sum)
+
+subtable = table.reindex(columns=[1910, 1960, 2010], level='year')
+letter_prop = subtable / subtable.sum().astype(float)
+
+fig, axes = plt.subplots(2, 1, figsize=(10, 8)) 
+letter_prop['M'].plot(kind='bar', rot=0, ax=axes[0], title='Male', legend=True)
+letter_prop['F'].plot(kind='bar', rot=0, ax=axes[1], title='Female', legend=False)
+```
+###### R
+```R
+letter_count <- babynames %>%
+  mutate(last_letter = str_sub(name, start=-1L, end=-1L )) %>%
+  group_by(year, sex, last_letter) %>% 
+  summarise(count=sum(births))
+
+letter_prop <- letter_count %>% 
+  filter(year %in% c(1910, 1960, 2010)) %>%
+  group_by(year, sex) %>%
+  mutate(letter_prop=count/sum(count))
+
+letter_prop %>% 
+  ggplot(aes(x=last_letter, y=letter_prop, fill=as.factor(year))) + 
+    geom_bar(stat='identity',position=position_dodge()) + 
+    facet_grid(sex ~ .)
+```
+### Plots the proportion of boy names ending in 'd', 'n', and 'y' over time
+###### Python
+```python
+letter_prop = table / table.sum().astype(float)
+dny_ts = letter_prop.ix[['d', 'n', 'y'], 'M'].T
+
+dny_ts.plot() 
+# table.ix(last_letter=='d')
+```
+###### R
+```R
+letter_count %>%
+  filter(sex=='M') %>%
+  group_by(year) %>%
+  mutate(letter_count=sum(count), letter_prop=count/sum(count)) %>%
+  filter(last_letter %in% c('d', 'n', 'y')) %>%
+  ggplot(aes(x=year, y=letter_prop, color=last_letter)) +
+    geom_line()
+```
