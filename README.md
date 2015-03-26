@@ -9,8 +9,8 @@ In October 2012 I wrote a document to help translate between R and python pandas
 I make no claims of completeness, but hope that readers will find this useful to go back and forth between the languages.
 
 
-[Super-short super-basic Data Munging in R and Python](https://github.com/contravariant/pandas_dplyr/blob/master/pandas_dplyr.md)
+* [Super-short super-basic Data Munging in R and Python](https://github.com/contravariant/pandas_dplyr/blob/master/pandas_dplyr.md)
 
-[Rmarkdown doc of the baby names analysis done in R](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.pdf)([Rmd](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.rmd))
+* [Rmarkdown doc of the baby names analysis done in R](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.pdf)([Rmd](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.rmd))
 
-[ipython notebook of the baby names analysis done in pydata](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames_pandas.pdf)([https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.ipynb](ipynb))
+* [ipython notebook of the baby names analysis done in pydata](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames_pandas.pdf)([ipynb](https://github.com/contravariant/pandas_dplyr/blob/master/babynames/babynames.ipynb))
