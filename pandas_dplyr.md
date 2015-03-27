@@ -426,6 +426,7 @@ babynames %<>%
 ```
 ### Top 1000 names by year, sex
 ###### Python
+```python
 def get_top1000(group):
     return group.sort_index(by='births', ascending=False)[:1000]
 grouped = names.groupby(['year', 'sex'])
