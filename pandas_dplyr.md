@@ -244,6 +244,15 @@ DF.describe()
 ```R
 summary(DF)
 ```
+## getting dimensions
+###### Python
+```python
+DF.shape
+```
+###### R
+```R
+dim(DF)
+```
 ## Converting to arrays for numerical computation
 Pandas and R/dplyr differ substantially on this account. In R, it is strongly inadvisable to perform binary operations on data frames. The user should convert the data to a suitable n-way array  and then perform operations. Conversely, Pandas is fully able to correctly perform operations on the underlying numpy object, with the added benefit of automatic alignment. mplyr is a package that does alignment on n-way arrays in R.
 ###### Python
