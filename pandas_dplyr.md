@@ -89,6 +89,7 @@ DF[['city','continent']]
 ###### R
 ```R
 select(DF, city, continent)
+DF[ , c('city', 'continent')] 
 ```
 ## Deleting columns
 ###### Python
