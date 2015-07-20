@@ -244,7 +244,7 @@ DF.describe()
 ```R
 summary(DF)
 ```
-## getting dimensions
+## Getting dimensions
 ###### Python
 ```python
 DF.shape
