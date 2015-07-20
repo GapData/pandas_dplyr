@@ -70,6 +70,16 @@ m <- matrix(1:12, ncol=2)
 colnames(m) <- letters[1:3]
 as.data.frame(m)
 ```
+## Getting row names
+###### Python
+```python
+DF.index  
+```
+###### R
+```R
+row.names(DF)
+DF %>% row.names    # magrittr version
+```
 ## Filtering rows
 ###### Python
 ```python
